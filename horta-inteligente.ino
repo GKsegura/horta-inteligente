@@ -41,29 +41,29 @@ void loop()
     delay(1000);
   }
 
-  if (umidadeSolo < limiarSeco)
-  {
-    // Posiciona o cursor do LCD na coluna 0 linha 1
-    // (Obs: linha 1 é a segunda linha, a contagem começa em 0
-    lcd.setCursor(0, 1);
-    // Exibe a mensagem no Display LCD:
-    lcd.print("    Regando     ");
-    // Liga a válvula
-    digitalWrite(pinoValvula, LOW);
-    // Espera o tempo estipulado
-    delay(tempoRega * 1000);
-    digitalWrite(pinoValvula, HIGH);
-  }
-  else
-  {
-    // Posiciona o cursor do LCD na coluna 0 linha 1
-    // (Obs: linha 1 é a segunda linha, a contagem começa em 0
-    lcd.setCursor(0, 1);
-    // Exibe a mensagem no Display LCD:
-    lcd.print("Solo Encharcado");
-    // Espera o tempo estipulado
-    delay(3000);
-  }
+  // if (umidadeSolo < limiarSeco)
+  // {
+  //   // Posiciona o cursor do LCD na coluna 0 linha 1
+  //   // (Obs: linha 1 é a segunda linha, a contagem começa em 0
+  //   lcd.setCursor(0, 1);
+  //   // Exibe a mensagem no Display LCD:
+  //   lcd.print("    Regando     ");
+  //   // Liga a válvula
+  //   digitalWrite(pinoValvula, LOW);
+  //   // Espera o tempo estipulado
+  //   delay(tempoRega * 1000);
+  //   digitalWrite(pinoValvula, HIGH);
+  // }
+  // else
+  // {
+  //   // Posiciona o cursor do LCD na coluna 0 linha 1
+  //   // (Obs: linha 1 é a segunda linha, a contagem começa em 0
+  //   lcd.setCursor(0, 1);
+  //   // Exibe a mensagem no Display LCD:
+  //   lcd.print("Solo Encharcado");
+  //   // Espera o tempo estipulado
+  //   delay(3000);
+  // }
 
   float temp = float(analogRead(tempCard));
   float temp2 = (temp * 5) / 1023;
