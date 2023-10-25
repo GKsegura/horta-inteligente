@@ -1,86 +1,107 @@
-#include <LiquidCrystal.h>
+// bibliotecas
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// defines
 #define tempCard A1
 #define buzzerCard 0
-
-const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
-const int pinoValvula = 10;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+#define endereco 0x27 // Endereços comuns: 0x27, 0x3F
+#define colunas 16
+#define linhas 2
 
 // variáveis do programa
+const int pinoValvula = 1;
 const int pinoSensor = A0;
-const int limiarSeco = 74;
-const int tempoRega = 5; // Tempo de rega em segundos
+const int limiarSeco = 50;
+const int limiarEncharcado = 70;
+const int tempoRega = 2;
 int umidadeSolo = 0;
+
+LiquidCrystal_I2C lcd(endereco, colunas, linhas);
 
 void setup()
 {
-  digitalWrite(pinoValvula, HIGH);
-  lcd.begin(16, 2);
+  pinMode(pinoValvula, OUTPUT);
+  digitalWrite(pinoValvula, LOW);
   pinMode(tempCard, INPUT);
   pinMode(buzzerCard, OUTPUT);
+  lcd.init();      // INICIA A COMUNICAÇÃO COM O DISPLAY
+  lcd.backlight(); // LIGA A ILUMINAÇÃO DO DISPLAY
+  lcd.clear();     // LIMPA O DISPLAY
 }
 
 void loop()
 {
-  // Mede a umidade a cada segundo. Faz isso durante uma hora (3600 segundos).
-  for (int i = 0; i < 5; i++)
-  {
-    // Posiciona o cursor do LCD na coluna 0 linha 1
-    // (Obs: linha 1 é a segunda linha, a contagem começa em 0
-    lcd.setCursor(0, 1);
-    // Exibe a mensagem no Display LCD:
-    lcd.print("Umidade: ");
-    // Faz a leitura do sensor de umidade do solo
-    umidadeSolo = analogRead(pinoSensor);
-    // Converte a variação do sensor de 0 a 1023 para 0 a 100
-    umidadeSolo = map(umidadeSolo, 1023, 0, 0, 100);
-    // Exibe a mensagem no Display LCD:
-    lcd.print(umidadeSolo);
-    lcd.print("%");
-    // Espera um segundo
-    delay(1000);
-  }
-
-  // if (umidadeSolo < limiarSeco)
-  // {
-  //   // Posiciona o cursor do LCD na coluna 0 linha 1
-  //   // (Obs: linha 1 é a segunda linha, a contagem começa em 0
-  //   lcd.setCursor(0, 1);
-  //   // Exibe a mensagem no Display LCD:
-  //   lcd.print("    Regando     ");
-  //   // Liga a válvula
-  //   digitalWrite(pinoValvula, LOW);
-  //   // Espera o tempo estipulado
-  //   delay(tempoRega * 1000);
-  //   digitalWrite(pinoValvula, HIGH);
-  // }
-  // else
-  // {
-  //   // Posiciona o cursor do LCD na coluna 0 linha 1
-  //   // (Obs: linha 1 é a segunda linha, a contagem começa em 0
-  //   lcd.setCursor(0, 1);
-  //   // Exibe a mensagem no Display LCD:
-  //   lcd.print("Solo Encharcado");
-  //   // Espera o tempo estipulado
-  //   delay(3000);
-  // }
+  setTela();
 
   float temp = float(analogRead(tempCard));
   float temp2 = (temp * 5) / 1023;
   float tempNova = temp2 / 0.01;
 
-  if (tempNova >= 40)
+  // Mede a umidade a cada segundo. Faz isso durante uma hora (3600 segundos).
+  for (int i = 0; i < 60; i++)
   {
-    digitalWrite(buzzerCard, HIGH);
-  }
-  else
-  {
-    digitalWrite(buzzerCard, LOW);
+    setTela();
+
+    lcd.print("Temp:");
+    lcd.print(tempNova);
+    lcd.write(0xDF);
+    lcd.print("C");
+
+    umidadeSolo = analogRead(pinoSensor);
+    umidadeSolo = map(umidadeSolo, 1023, 0, 0, 100);
+
+    lcd.setCursor(0, 1);
+    lcd.print("Umidade: ");
+    lcd.print(umidadeSolo);
+    lcd.print("%");
+
+    Serial.print("Umidade: ");
+    int tempoRestante = 60 - i;
+
+    lcd.print(" ");
+    lcd.print(tempoRestante);
+    lcd.print("s");
+
+    delay(1000);
   }
 
+  if (umidadeSolo < limiarSeco)
+  {
+    setTela();
+    lcd.print("Solo seco");
+    lcd.setCursor(0, 1);
+    delay(10000);
+    rega();
+  }
+  else if (umidadeSolo >= limiarSeco && umidadeSolo < limiarEncharcado)
+  {
+    setTela();
+    lcd.print("Solo umido");
+    delay(10000);
+  }
+  else if (umidadeSolo >= limiarEncharcado)
+  {
+    setTela();
+    lcd.print("Solo encharcado");
+    delay(10000);
+  }
+}
+
+void setTela()
+{
+  lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("T:");
-  lcd.print(tempNova);
-  lcd.write(0xDF);
-  lcd.print("C");
+}
+
+void rega()
+{
+  // Exibe a mensagem no Display LCD:
+  lcd.print("Regando");
+  // Liga a válvula
+  digitalWrite(pinoValvula, HIGH);
+  // Espera o tempo estipulado
+  delay(tempoRega * 1000);
+  // desliga a válvula
+  digitalWrite(pinoValvula, LOW);
 }
