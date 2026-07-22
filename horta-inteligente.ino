@@ -4,13 +4,15 @@
 
 // defines
 #define tempCard A1
-#define buzzerCard 0
 #define endereco 0x27 // Endereços comuns: 0x27, 0x3F
 #define colunas 16
 #define linhas 2
 
 // variáveis do programa
-const int pinoValvula = 1;
+// D0 e D1 são usados pela comunicação serial (RX/TX) — evitamos usá-los
+// como saída digital pra não conflitar com o Serial.print.
+const int pinoValvula = 2;
+const int pinoBuzzer = 3;
 const int pinoSensor = A0;
 const int limiarSeco = 50;
 const int limiarEncharcado = 70;
@@ -21,10 +23,11 @@ LiquidCrystal_I2C lcd(endereco, colunas, linhas);
 
 void setup()
 {
+  Serial.begin(9600); // necessário pra Serial.print funcionar
   pinMode(pinoValvula, OUTPUT);
   digitalWrite(pinoValvula, LOW);
   pinMode(tempCard, INPUT);
-  pinMode(buzzerCard, OUTPUT);
+  pinMode(pinoBuzzer, OUTPUT);
   lcd.init();      // INICIA A COMUNICAÇÃO COM O DISPLAY
   lcd.backlight(); // LIGA A ILUMINAÇÃO DO DISPLAY
   lcd.clear();     // LIMPA O DISPLAY
@@ -57,6 +60,8 @@ void loop()
     lcd.print("%");
 
     Serial.print("Umidade: ");
+    Serial.println(umidadeSolo);
+
     int tempoRestante = 60 - i;
 
     lcd.print(" ");
